@@ -15,7 +15,11 @@ import java.util.zip.ZipException;
  */
 
 public class FindClass {
-    public static final String  DEFAULTJARFILTER =  "^.*\\.[Jj][Aa][Rr]$";
+    public static final String  DEFAULTJARFILTER =  "^.*\\.[JjWwEe][AaJj][RrBb]$";
+
+    public static boolean isClassFilename (String filename) {
+	return (filename.toLowerCase ().endsWith (".class"));
+    }
 
     /**
      * <p>
@@ -136,10 +140,12 @@ public class FindClass {
         boolean         packageFilter =     false;
         boolean         verbose =           false;
         String          directory =         null;
+        String []       classes;
         String []       entries;
-        String []       files;
+        String []       archives;
         String []       classFilterArray;
         List <String>   jarFilters =        new ArrayList <String> ();
+        List <String>   classFiles =        new ArrayList <String> ();
         List <String>   classFilters =      new ArrayList <String> ();
         List <String>   packageFilters =    new ArrayList <String> ();
         ZipHelper       zipHelper;
@@ -159,11 +165,12 @@ public class FindClass {
             else if (packageFilter)
                 packageFilters.add ("^.*" + args [i] + ".*\\.[Cc][Ll][Aa][Ss][Ss]$");
             else if (classFilter || (i >= (args.length - 1)))
-                classFilters.add ("^.*" + ((args [i].toLowerCase ().endsWith (".class"))
+                classFilters.add ("^.*" + (isClassFilename(args [i])
                                            ? args [i] : args [i] + "\\.[Cc][Ll][Aa][Ss][Ss]") + "$");
             else
                 jarFilters.add (args [i]);
         }
+	classFiles.addAll (classFilters);
         classFilters.addAll (packageFilters);
         if (classFilters.size () <= 0)
             System.out.println ("usage: java " + finder.getClass ().getName () +
@@ -182,26 +189,32 @@ public class FindClass {
                     System.out.println ("\t\t" + jarFilters.get (i));
                 System.out.println ("\tin directory: " + directory);
             }
-            files = DirectoryHelper.list (directory, jarFilters.toArray (new String [] {}), DirectoryHelper.RECURSE_DIRECTORIES);
+            archives = DirectoryHelper.list (directory, jarFilters.toArray (new String [] {}), DirectoryHelper.RECURSE_DIRECTORIES);
             classFilterArray = classFilters.toArray (new String [] {});
-            for (i = 0; i < files.length; i++) {
+            for (i = 0; i < archives.length; i++) {
                 if (verbose)
-                    System.out.println (i + "\t\"" + files [i] + "\"");
-                zipHelper = new ZipHelper (files [i]);
+                    System.out.println (i + "\t\"" + archives [i] + "\"");
+                zipHelper = new ZipHelper (archives [i]);
                 try {
                     entries = zipHelper.getNames (classFilterArray, ZipHelper.WITHOUT_DIRECTORIES | ZipHelper.WITHOUT_DIRECTORIES);
                     if (entries.length > 0) {
-                        System.out.println (files [i]);
+                        System.out.println (archives [i]);
                         for (j = 0; j < entries.length; j++)
                             System.out.println ("\t[" + j + "]:\t\"" + entries [j] + "\"");
                     }
                 }
 		catch (FileNotFoundException fnfe) {
-		    System.out.println ("File: \"" + files [i] + "\" does not exist, ignored");
+		    System.out.println ("File: \"" + archives [i] + "\" does not exist, ignored");
 		}
                 catch (ZipException ze) {
-                    // O.K. "files [i]" calls itself a JAR, but isn't.  Naughty little bugger, but we don't have to care at this point.
+                    // O.K. "archives [i]" calls itself a JAR, but isn't.  Naughty little bugger, but we don't have to care at this point.
                 }
+            }
+            classes = DirectoryHelper.list (directory, classFiles.toArray (new String [] {}), DirectoryHelper.RECURSE_DIRECTORIES);
+            for (i = 0; i < classes.length; i++) {
+                if (verbose)
+                    System.out.println (i + "\t\"" + classes [i] + "\"");
+		System.out.println (classes [i]);
             }
         }
     }
