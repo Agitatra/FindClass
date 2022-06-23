@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Serializable;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -104,6 +105,7 @@ public class ZipHelper {
     private static final int   LIST =  0;
     private static final int   PUT =   1;
     private static final int   GET =   2;
+    private static final int   PRINT = 3;
 
     private String             archiveName;
 
@@ -140,6 +142,23 @@ public class ZipHelper {
         if (entry == null)
             throw new FileNotFoundException (entryName);
         return (archive.getInputStream (entry));
+    }
+
+    public InputStream [] getMulti (String entryNamePattern) throws FileNotFoundException, IOException {
+        ZipEntry                            entry;
+        String []                           entryNames = findEntries (entryNamePattern);
+        ZipFile                             archive =    openZipFile (archiveName);
+        List <InputStream>                  retVals = new ArrayList <> ();
+
+
+        for (String entryName: entryNames) {
+            entry = archive.getEntry (normaliseEntryname (entryName));
+            InputStream is = get (entryName);
+            if (entry == null)
+                throw new FileNotFoundException (entryName);
+            retVals.add (get (entryName));
+        }
+        return (retVals.toArray (new InputStream [retVals.size ()]));
     }
 
     public InputStream get (String entryName) throws FileNotFoundException, IOException {
@@ -414,28 +433,33 @@ public class ZipHelper {
         try {
             for (i = 0; i < files.length; i++)
                 try {
-                    try {
-                        entryIn = get (archive, files [i]);
-                    }
-                    catch (FileNotFoundException fnfe) {
+                    for (String filename : findEntries (files[i])) {
                         try {
-                            entryIn = get (archive, new File (files [i]).getCanonicalPath ());
+                            entryIn = get (archive, filename);
                         }
-                        catch (IOException ioe) {
-                            entryIn = get (archive, new File (files [i]).getAbsolutePath ());
+                        catch (FileNotFoundException fnfe) {
+                            try {
+                                entryIn = get (archive, new File (filename).getCanonicalPath ());
+                            }
+                            catch (IOException ioe) {
+                                entryIn = get (archive, new File (filename).getAbsolutePath ());
+                            }
                         }
+                        unwraped = new File (filename);
+                        if (unwraped.exists () && !overwrite) {
+                            errorFiles.add (filename);
+                            continue;
+                        }
+                        File unwrapDir = Paths.get (unwraped.getAbsolutePath ()).getParent ().toFile ();
+                        if (!unwrapDir.exists ())
+                            unwrapDir.mkdirs ();
+                        output = new FileOutputStream (unwraped);
+                        while ((len = entryIn.read (buffer)) > 0)
+                            output.write (buffer, 0, len);
+                        output.close ();
+                        entryIn.close ();
+
                     }
-                    unwraped = new File (files [i]);
-                    if (unwraped.exists () && !overwrite) {
-                        errorFiles.add (files [i]);
-                        continue;
-                    }
-                    output = new FileOutputStream (unwraped);
-                    while ((len = entryIn.read (buffer)) > 0)
-                        output.write (buffer, 0, len);
-                    output.close ();
-                    entryIn.close ();
-                    
                 }
                 catch (FileNotFoundException fnfe) {
                     errorFiles.add (files [i]);
@@ -561,6 +585,25 @@ public class ZipHelper {
         return (names.toArray (new String [] {}));
     }
 
+    public String [] findEntries (String namePatternString) throws ZipException, FileNotFoundException, IOException {
+        ZipEntry                            entry;
+        List <String>                       names =       new ArrayList <String> ();
+        ZipFile                             archive =     openZipFile (archiveName);
+        Enumeration <? extends ZipEntry>    entries =     archive.entries ();
+        Pattern                             namePattern = Pattern.compile (namePatternString);
+
+        String [] entryFilter = new String []{namePatternString};
+        return (getNames (entryFilter, WITH_DIRECTORIES));
+    }
+
+    public StringBuilder [] getEntriesAsString (String namePatternString) throws ZipException, FileNotFoundException, IOException {
+        String [] entryNames = findEntries (namePatternString);
+        List <StringBuilder> retVal = new ArrayList <> ();
+
+        for (String entryName: entryNames)
+            retVal.add (getString (entryName));
+        return (retVal.toArray (new StringBuilder[retVal.size ()]));
+    }
     public static void main (String args []) throws ZipException, IOException {
         int             i;
         boolean         usage =     false;
@@ -576,6 +619,8 @@ public class ZipHelper {
                 action = PUT;
             else if ("-get".startsWith (args [i].toLowerCase ()))
                 action = GET;
+            else if ("-print".startsWith (args [i].toLowerCase ()))
+                action = PRINT;
             else if ("-list".startsWith (args [i].toLowerCase ()))
                 action = LIST;
             else if (archiveName == null)
@@ -595,21 +640,45 @@ public class ZipHelper {
                 case LIST:
                     entries = zipper.list ();
                     for (i = 0; i < entries.length; i++)
-                        System.out.printf ("%s [%02d]:\t%s", archiveName, i, entries [i]);
+                        System.out.printf ("%s [%02d]:\t%s", archiveName, i, entries[i]);
                     break;
                 case PUT:
-                    if ((errorFiles = zipper.addFiles (files.toArray (new String [] {}))) != null) {
+                    if ((errorFiles = zipper.addFiles (files.toArray (new String[] {}))) != null) {
                         System.out.println ("Error zipping:");
                         for (i = 0; i < errorFiles.length; i++)
-                            System.out.println (errorFiles [i]);
+                            System.out.println (errorFiles[i]);
                     }
                     break;
                 case GET:
-                    if ((errorFiles = zipper.unwrap (files.toArray (new String [] {}), false)) != null) {
+                    if ((errorFiles = zipper.unwrap (files.toArray (new String[] {}), false)) != null) {
                         System.out.println ("Error unzipping:");
                         for (i = 0; i < errorFiles.length; i++)
-                            System.out.println (errorFiles [i]);
+                            System.out.println (errorFiles[i]);
                     }
+                    break;
+                case PRINT:
+                    List <String> errorFilesList = new ArrayList <> ();
+                    StringBuilder content = new StringBuilder ();
+                    StringBuilder [] contents ;
+                    String filename = null;
+                    for (int j = 0; j < files.size (); j++) {
+                        filename = files.get (j);
+                        try {
+                            contents = zipper.getEntriesAsString (filename);
+                            for (StringBuilder entryContent: contents)
+                                content.append (entryContent).append ('\n');
+                        }
+                        catch (IOException ioe) {
+                            errorFilesList.add (filename);
+                        }
+                    }
+                    if (errorFilesList.size () > 0) {
+                        System.out.println ("Error printing:");
+                        for (String errorFile: errorFilesList)
+                            System.out.println (errorFile);
+                    }
+                    else
+                        System.out.println (content);
                     break;
             }
         }

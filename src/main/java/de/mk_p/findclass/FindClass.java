@@ -2,6 +2,7 @@ package de.mk_p.findclass;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipException;
@@ -18,7 +19,20 @@ public class FindClass {
     public static final String  DEFAULTJARFILTER =  "^.*\\.[JjWwEe][AaJj][RrBb]$";
 
     public static boolean isClassFilename (String filename) {
-	return (filename.toLowerCase ().endsWith (".class"));
+        return (filename.toLowerCase ().endsWith (".class"));
+    }
+
+    public static String filnpathWoExtension (String filename) {
+        if (filename == null) {
+            return null;
+        }
+        int index = filename.lastIndexOf (".");
+
+        if (index == -1) {
+            return filename;
+        } else {
+            return filename.substring (0, index);
+        }
     }
 
     /**
@@ -132,7 +146,7 @@ public class FindClass {
      * </samp></li></ul>
      * </p>
      */
-    public static void main (String args []) throws IOException {
+    public static void main (String [] args) throws IOException {
         int             i;
         int             j;
         boolean         jarFilter =         false;
@@ -144,10 +158,10 @@ public class FindClass {
         String []       entries;
         String []       archives;
         String []       classFilterArray;
-        List <String>   jarFilters =        new ArrayList <String> ();
-        List <String>   classFiles =        new ArrayList <String> ();
-        List <String>   classFilters =      new ArrayList <String> ();
-        List <String>   packageFilters =    new ArrayList <String> ();
+        List <String>   jarFilters =        new ArrayList <> ();
+        List <String>   classFiles =        new ArrayList <> ();
+        List <String>   classFilters =      new ArrayList <> ();
+        List <String>   packageFilters =    new ArrayList <> ();
         ZipHelper       zipHelper;
         FindClass       finder =            new FindClass ();
 
@@ -170,7 +184,7 @@ public class FindClass {
             else
                 jarFilters.add (args [i]);
         }
-	classFiles.addAll (classFilters);
+        classFiles.addAll (classFilters);
         classFilters.addAll (packageFilters);
         if (classFilters.size () <= 0)
             System.out.println ("usage: java " + finder.getClass ().getName () +
@@ -195,12 +209,24 @@ public class FindClass {
                 if (verbose)
                     System.out.println (i + "\t\"" + archives [i] + "\"");
                 zipHelper = new ZipHelper (archives [i]);
+                PomHelper pom;
+                StringBuilder [] pomContent = zipHelper.getEntriesAsString ("META-INF/maven/.*/pom.properties");
+                if (pomContent instanceof StringBuilder [] && pomContent.length > 0)
+                    pom = new PomHelper (pomContent [0]);
+                else if ((pom = PomHelper.getInfo (filnpathWoExtension (archives[i]) + ".pom")) == null)
+                    pom = PomHelper.getInfo (Paths.get (archives [i]).getParent ().toString () + "pom.xml");
                 try {
-                    entries = zipHelper.getNames (classFilterArray, ZipHelper.WITHOUT_DIRECTORIES | ZipHelper.WITHOUT_DIRECTORIES);
+                    entries = zipHelper.getNames (classFilterArray, ZipHelper.WITHOUT_DIRECTORIES);
                     if (entries.length > 0) {
-                        System.out.println (archives [i]);
+                        System.out.print (archives [i]);
+                        if (pom != null)
+                            System.out.print ("; Group: " +
+                                              ((pom.getGroupId () != null) ? pom.getGroupId () : "[inherited]" ) +
+                                              ", Artifact: " + pom.getArtifactId () +
+                                              ", Version: " + pom.getVersion () + ".");
+                        System.out.println ();
                         for (j = 0; j < entries.length; j++)
-                            System.out.println ("\t[" + j + "]:\t\"" + entries [j] + "\"");
+                            System.out.println ("\t[" + j + "]:\t\"" + entries[j] + "\"");
                     }
                 }
 		catch (FileNotFoundException fnfe) {
