@@ -1,3 +1,5 @@
 target
 FindClass.jar
 javadoc
+.idea
+dependency-reduced-pom.xml

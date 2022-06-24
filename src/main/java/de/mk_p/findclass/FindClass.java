@@ -22,19 +22,6 @@ public class FindClass {
         return (filename.toLowerCase ().endsWith (".class"));
     }
 
-    public static String filnpathWoExtension (String filename) {
-        if (filename == null) {
-            return null;
-        }
-        int index = filename.lastIndexOf (".");
-
-        if (index == -1) {
-            return filename;
-        } else {
-            return filename.substring (0, index);
-        }
-    }
-
     /**
      * <p>
      * Die Methode sucht nach Klassen in Java Archiven.
@@ -164,6 +151,7 @@ public class FindClass {
         List <String>   packageFilters =    new ArrayList <> ();
         ZipHelper       zipHelper;
         FindClass       finder =            new FindClass ();
+        PomHelper       pom;
 
         for (i = 0; i < args.length; i++) {
             if ("-jarfilter".startsWith (args [i].toLowerCase ()))
@@ -209,16 +197,11 @@ public class FindClass {
                 if (verbose)
                     System.out.println (i + "\t\"" + archives [i] + "\"");
                 zipHelper = new ZipHelper (archives [i]);
-                PomHelper pom;
-                StringBuilder [] pomContent = zipHelper.getEntriesAsString ("META-INF/maven/.*/pom.properties");
-                if (pomContent instanceof StringBuilder [] && pomContent.length > 0)
-                    pom = new PomHelper (pomContent [0]);
-                else if ((pom = PomHelper.getInfo (filnpathWoExtension (archives[i]) + ".pom")) == null)
-                    pom = PomHelper.getInfo (Paths.get (archives [i]).getParent ().toString () + "pom.xml");
                 try {
                     entries = zipHelper.getNames (classFilterArray, ZipHelper.WITHOUT_DIRECTORIES);
                     if (entries.length > 0) {
                         System.out.print (archives [i]);
+                        pom = new PomHelper (zipHelper,archives[i]);
                         if (pom != null)
                             System.out.print ("; Group: " +
                                               ((pom.getGroupId () != null) ? pom.getGroupId () : "[inherited]" ) +

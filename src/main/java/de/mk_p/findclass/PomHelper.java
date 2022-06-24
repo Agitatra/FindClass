@@ -5,9 +5,11 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipException;
 
 public class PomHelper {
     private String id;
@@ -15,9 +17,12 @@ public class PomHelper {
     private String artifactId;
     private String version;
 
-    private static Pattern groupIdPattern = null;
-    private static Pattern artifactIdPattern = null;
-    private static Pattern versionPattern = null;
+    private static Pattern groupIdPattern = Pattern.compile ("\\bgroupId *= *([^\\p{Space}=]+)(?:[\\p{Space}=]?|$)",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.UNIX_LINES);
+    private static Pattern artifactIdPattern = Pattern.compile ("\\bartifactId *= *([^\\p{Space}=]+)(?:[\\p{Space}=]|$)",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.UNIX_LINES);
+    private static Pattern versionPattern = Pattern.compile ("\\bversion *= *([^\\p{Space}=]+)(?:[\\p{Space}=]|$)",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.UNIX_LINES);
     public PomHelper (String id, String groupId, String artifactId, String version) {
         this.id = id;
         this.groupId = groupId;
@@ -26,37 +31,80 @@ public class PomHelper {
     }
 
     public PomHelper (StringBuilder pomProperties) {
-        String pomPropertiesX = pomProperties.toString ().replace ('\n', ' ');
-        if (groupIdPattern == null)
-            groupIdPattern = Pattern.compile ("\\bgroupId *= *([^\\p{Space}=]+)(?:[\\p{Space}=]?|$)",
-                                              Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.UNIX_LINES);
-        if (artifactIdPattern == null)
-            artifactIdPattern = Pattern.compile ("\\bartifactId *= *([^\\p{Space}=]+)(?:[\\p{Space}=]|$)",
-                                                 Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.UNIX_LINES);
-        if (versionPattern == null)
-            versionPattern = Pattern.compile ("\\bversion *= *([^\\p{Space}=]+)(?:[\\p{Space}=]|$)",
-                                              Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.UNIX_LINES);
-        Matcher groupidMatcher = groupIdPattern.matcher (pomPropertiesX);
-        Matcher artifactidMatcher = artifactIdPattern.matcher (pomPropertiesX);
-        Matcher versionMatcher = versionPattern.matcher (pomPropertiesX);
-        this.id = "";
+        PomHelper copy = parse (pomProperties);
+        this.id = copy.getId ();
+        this.groupId = copy.getGroupId ();
+        this.artifactId = copy.getArtifactId ();
+        this.version = copy.getVersion ();
+    }
+
+    private static PomHelper parse (StringBuilder pomProperties) {
+        String groupId;
+        String artifactId;
+        String version;
+        Matcher groupidMatcher = groupIdPattern.matcher (pomProperties);
+        Matcher artifactidMatcher = artifactIdPattern.matcher (pomProperties);
+        Matcher versionMatcher = versionPattern.matcher (pomProperties);
         if (groupidMatcher.find ())
-            this.groupId = groupidMatcher.group (1);
+            groupId = groupidMatcher.group (1);
         else
-            this.groupId = null;
+            groupId = null;
         if (artifactidMatcher.find ())
-            this.artifactId = artifactidMatcher.group (1);
+            artifactId = artifactidMatcher.group (1);
         else
-            this.artifactId = null;
+            artifactId = null;
         if (versionMatcher.find ())
-            this.version = versionMatcher.group (1);
+            version = versionMatcher.group (1);
         else
+            version = null;
+        return new PomHelper ("", groupId, artifactId, version);
+    }
+
+    public PomHelper (ZipHelper zipHelper, String archiveName) {
+        PomHelper copy;
+        StringBuilder [] pomContent;
+
+        try {
+            pomContent = zipHelper.getEntriesAsString ("META-INF/maven/.*/pom.properties");
+        }
+        catch (IOException e) {
+            pomContent = null;
+        }
+        if (pomContent instanceof StringBuilder [] && pomContent.length > 0) {
+            copy = parse (pomContent[0]);
+        }
+        else if ((copy = PomHelper.getInfo (filepathWoExtension (archiveName) + ".pom")) == null)
+            copy = PomHelper.getInfo (Paths.get (archiveName).getParent ().toString () + "pom.xml");
+        if (copy != null) {
+            this.id = copy.getId ();
+            this.groupId = copy.getGroupId ();
+            this.artifactId = copy.getArtifactId ();
+            this.version = copy.getVersion ();
+        }
+        else {
+            this.id = "";
+            this.groupId = null;
+            this.artifactId = null;
             this.version = null;
+        }
     }
 
     public String getId () {
         return (id);
     }
+    public static String filepathWoExtension (String filename) {
+        if (filename == null) {
+            return null;
+        }
+        int index = filename.lastIndexOf (".");
+
+        if (index == -1) {
+            return filename;
+        } else {
+            return filename.substring (0, index);
+        }
+    }
+
 
     public String getGroupId () {
         return (groupId);
