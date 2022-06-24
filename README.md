@@ -32,7 +32,7 @@ All commands start with one hyphen.
 
 The meaning of positional parameters change with the Commands provided.
 - As long as neither "-jarfilter", "-packagefilter" nor "-classfilter" commands are specified and only one positional parameter is given, the positional parameter is regarded as a class specification, identical to being preceded by a "-classfilter" command.
-- If no command but two positional parameters are provided, the first specifes a starting point within the file system, and the second the class filter.
+- If no command but only positional parameters are provided, all the parameters before the last specify starting points within the file system, and the last the class filter.
 - All positional parameters behind a command ("-jarfilter", "-packagefilter" or "-classfilter") are filter specifications for their preceding commands, either until another command or all parameters are exhausted.
 
 ### Examples
@@ -43,10 +43,10 @@ The following parameter searches for a class whose name ends with "String" in al
 - $ java -jar FindClass.jar String
 
 The following example search for all classes from the package: "java.io" in all Java archives called "palle.jar", "pille.jar" and "pulle.jar" in the current folder and below.  The example assumes that "FindClass" is called from a *ix like shell, therefore backslashes have to be quoted.
-- j$ ava FindClass.jar -jarfilter "p[aiu]lle\\\\.jar" -packagefilter "java\\\\.io"
+- $ java -jar FindClass.jar -jarfilter "p[aiu]lle\\\\.jar" -packagefilter "java\\\\.io"
 
-The following example searches in a *ix-shell for all classes in the package "java.io" and the class: "java.lang.String" in all Java archives called: "pulle.jar", "bla.jar", "blub.jar" und "blubber.jar" in the folder: "/usr/java/lib" and below. During the execution additional log messages are shown.
-- $ java FindClass /usr/java/lib -verbose -jarfilter "p[aiu]lle\\\\.jar" "bl(a|ub|ubber)\\\\.jar" -packagefilter "^java\\\\.io" -classfilter "java\\\\.lang\\\\.String"
+The following example searches in a *ix-shell for all classes in the package "java.io" and the class: "java.lang.String" in all Java archives called: "pulle.jar", "bla.jar", "blub.jar" und "blubber.jar" in the folders and subfolders of: "/usr/java/lib" and "~/.m2/repository". During the execution additional log messages are shown.
+- $ java -jar FindClass /usr/java/lib ~/.m2/registry -verbose -jarfilter "p[aiu]lle\\\\.jar" "bl(a|ub|ubber)\\\\.jar" -packagefilter "^java\\\\.io" -classfilter "java\\\\.lang\\\\.String"
 
 
 ### Licenses

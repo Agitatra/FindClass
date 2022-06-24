@@ -140,7 +140,7 @@ public class FindClass {
         boolean         classFilter =       false;
         boolean         packageFilter =     false;
         boolean         verbose =           false;
-        String          directory =         null;
+        List <String>   directories =       new ArrayList <> ();
         String []       classes;
         String []       entries;
         String []       archives;
@@ -162,8 +162,8 @@ public class FindClass {
                 packageFilter = jarFilter = !(classFilter = true);
             else if ("-verbose".startsWith (args [i].toLowerCase ()))
                 verbose = true;
-            else if (!jarFilter && !classFilter && (i < (args.length - 1)) && (directory == null))
-                directory = args [i];
+            else if (!jarFilter && !classFilter && (i < (args.length - 1)) /*&& (directory == null)*/)
+                directories.add (args [i]);
             else if (packageFilter)
                 packageFilters.add ("^.*" + args [i] + ".*\\.[Cc][Ll][Aa][Ss][Ss]$");
             else if (classFilter || (i >= (args.length - 1)))
@@ -178,8 +178,8 @@ public class FindClass {
             System.out.println ("usage: java " + finder.getClass ().getName () +
                     "[directory] [[-jarfilter ]jar-filter...] [[-classfilter ]classFilter...] classfilter");
         else {
-            if (directory == null)
-                directory = ".";
+            if (directories.size () <= 0)
+                directories.add (".");
             if (jarFilters.size () <= 0)
                 jarFilters.add  (FindClass.DEFAULTJARFILTER);
             if (verbose) {
@@ -189,9 +189,10 @@ public class FindClass {
                 System.out.println ("\tin JAR:");
                 for (i = 0; i < jarFilters.size (); i++)
                     System.out.println ("\t\t" + jarFilters.get (i));
-                System.out.println ("\tin directory: " + directory);
+                for (String directory: directories)
+                    System.out.print ("\t directory: " + directory);
             }
-            archives = DirectoryHelper.list (directory, jarFilters.toArray (new String [] {}), DirectoryHelper.RECURSE_DIRECTORIES);
+            archives = DirectoryHelper.list (directories.toArray (new String [directories.size ()]), jarFilters.toArray (new String [] {}), DirectoryHelper.RECURSE_DIRECTORIES);
             classFilterArray = classFilters.toArray (new String [] {});
             for (i = 0; i < archives.length; i++) {
                 if (verbose)
@@ -219,7 +220,8 @@ public class FindClass {
                     // O.K. "archives [i]" calls itself a JAR, but isn't.  Naughty little bugger, but we don't have to care at this point.
                 }
             }
-            classes = DirectoryHelper.list (directory, classFiles.toArray (new String [] {}), DirectoryHelper.RECURSE_DIRECTORIES);
+            classes = DirectoryHelper.list (directories.toArray (new String [directories.size ()]),
+                                            classFiles.toArray (new String [] {}), DirectoryHelper.RECURSE_DIRECTORIES);
             for (i = 0; i < classes.length; i++) {
                 if (verbose)
                     System.out.println (i + "\t\"" + classes [i] + "\"");

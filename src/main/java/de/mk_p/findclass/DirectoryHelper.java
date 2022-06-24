@@ -167,7 +167,7 @@ public class DirectoryHelper {
      *         {@linkplain java.io.IOException Ausnahme} wirft oder nicht.
      */
 
-    public static String [] list (String directory, String [] filters, long options, Comparator <String> comparator) {
+    public static String [] list (String [] directories, String [] filters, long options, Comparator <String> comparator) {
         boolean         recurseDirectories;
         boolean         recurseMatchedDirectories;
         boolean         ignoreCase;
@@ -196,52 +196,54 @@ public class DirectoryHelper {
         else
             ignoreCase = (System.getProperty ("os.name").substring (0, 3).equalsIgnoreCase ("win"));
         flags = (ignoreCase) ? Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE : 0;
-        dir = new File (((directory != null) && (directory.length () > 0)) ? directory : System.getProperty ("user.dir"));
-        if (dir.isDirectory ()) { // check to make sure it is a directory
-            filterPatternsList = new ArrayList <Pattern> ();
-            if (filters != null)
-                for (i = 0; i < filters.length; i++) {
-                    try {
-                        filterPatternsList.add (Pattern.compile (filters [i], flags));
+        for (String directory: directories) {
+            dir = new File (((directory != null) && (directory.length () > 0)) ? directory : System.getProperty ("user.dir"));
+            if (dir.isDirectory ()) { // check to make sure it is a directory
+                filterPatternsList = new ArrayList <Pattern> ();
+                if (filters != null)
+                    for (i = 0; i < filters.length; i++) {
+                        try {
+                            filterPatternsList.add (Pattern.compile (filters [i], flags));
 
+                        }
+                        catch (PatternSyntaxException pse) {
+                            // silently ignore this pattern...
+                        }
+                    }
+                if (filterPatternsList.size () <= 0)  // no filters delivered or none did compile
+                    try {
+                        filterPatternsList.add (Pattern.compile (DEFAULTFILTER, flags));
                     }
                     catch (PatternSyntaxException pse) {
-                        // silently ignore this pattern...
+                        // This should not happen...
+                        pse.printStackTrace ();
                     }
-                }
-            if (filterPatternsList.size () <= 0)  // no filters delivered or none did compile
-                try {
-                    filterPatternsList.add (Pattern.compile (DEFAULTFILTER, flags));
-                }
-                catch (PatternSyntaxException pse) {
-                    // This should not happen...
-                    pse.printStackTrace ();
-                }
-            filterPatterns = filterPatternsList.toArray (new Pattern [] {});
-            filenames = dir.list ();
-            if (filenames != null) {
-                OUTER: for (i = 0; i < filenames.length; i++) {
-                    path = directory + File.separator + filenames [i];
-                    if (recurseDirectories && (new File (path)).isDirectory ())
-                        retValList.addAll (Arrays.asList (list (path, filters, options)));
-                    else
-                        for (j = 0; j < filterPatterns.length; j++) {
-                            matcher = filterPatterns [j].matcher (filenames [i]);
-                            if (matcher.matches ()) {
-                                if (recurseMatchedDirectories && (new File (path)).isDirectory ())
-                                    retValList.addAll (Arrays.asList (list (path, filters, options)));
-                                else {
-                                    try {
-                                        path = (new File (path)).getCanonicalPath ();
+                filterPatterns = filterPatternsList.toArray (new Pattern [] {});
+                filenames = dir.list ();
+                if (filenames != null) {
+                    OUTER: for (i = 0; i < filenames.length; i++) {
+                        path = directory + File.separator + filenames [i];
+                        if (recurseDirectories && (new File (path)).isDirectory ())
+                            retValList.addAll (Arrays.asList (list (path, filters, options)));
+                        else
+                            for (j = 0; j < filterPatterns.length; j++) {
+                                matcher = filterPatterns [j].matcher (filenames [i]);
+                                if (matcher.matches ()) {
+                                    if (recurseMatchedDirectories && (new File (path)).isDirectory ())
+                                        retValList.addAll (Arrays.asList (list (path, filters, options)));
+                                    else {
+                                        try {
+                                            path = (new File (path)).getCanonicalPath ();
+                                        }
+                                        catch (IOException ioe) {
+                                            path = (new File (path)).getAbsolutePath ();
+                                        }
+                                        retValList.add (path);
                                     }
-                                    catch (IOException ioe) {
-                                        path = (new File (path)).getAbsolutePath ();
-                                    }
-                                    retValList.add (path);
+                                    continue OUTER;   // only one match required
                                 }
-                                continue OUTER;   // only one match required
                             }
-                        }
+                    }
                 }
             }
         }
@@ -254,6 +256,81 @@ public class DirectoryHelper {
         return (retVal);
     }
 
+    /**
+     * <p>
+     * Die Methode akzeptiert den Namen eines Dateisystemordners und mehrere
+     * {@linkplain java.util.regex.Pattern regul&auml;re Ausdr&uuml;cke} die verwendet werden um im &uuml;bergebenen Ordner
+     * und je nach Optionen m&ouml;glicherweise in Unterordnern nach Dateien zu suchen.
+     * </p>
+     * <p>
+     * Die Methode durchsucht den angegebenen Ordner und m&ouml;glicherweise Unterordner auf Dateien die einem oder mehreren
+     * Filterausdr&uuml;cken entsprechen und gibt deren Namen zur�ck.
+     * Gro&szlig;-/Kleinschreibung wird je nach Optionen ber&uuml;cksichtigt (Windows: ja, andere: nein).
+     * </p>
+     * <p>
+     * Sofern kein Wert f�r den Ordner oder kein Filterkriterium angegeben werden, wird von: <q>.</q> und: <q>^.*$</q> ausgegangen.
+     * </p>
+     *
+     * @param  directory    Der Name des Dateisystemordners der durchsucht werden soll.
+     * @param  filters      Ein Feld mit {@linkplain java.lang.String Zeichenkette} die als {@linkplain java.util.regex.Pattern Filter}
+     *                      zur Suche nach Dateinamen verwendet werden sollen.
+     * @param  options      Ein Wert der aus der logischen <q>Veroderung</q> einer oder mehrerer der folgenden Optionen entsteht.
+     *                      <dl>
+     *                      <dt>{@linkplain #RECURSE_DIRECTORIES RECURSE_DIRECTORIES}</dt>
+     *                      <dd>Bei der Suche sollen Unterverzeichnisse mit einbezogen werden.
+     *                          Darf nicht gleichzeitig mit: <q>{@linkplain #RECURSE_MATCHEDDIRECTORIES}</q> angegeben werden.
+     *                      </dd>
+     *                      <dt>{@linkplain #RECURSE_MATCHEDDIRECTORIES RECURSE_MATCHEDDIRECTORIES}</dt>
+     *                      <dd>Bei der Suche sollen Unterverzeichnisse, deren Namen einem der Filterkriterien entsprechen,
+     *                          mit einbezogen werden.
+     *                          Darf nicht gleichzeitig mit: <q>{@linkplain #RECURSE_DIRECTORIES}</q> angegeben werden.
+     *                      </dd>
+     *                      <dt>{@linkplain #MATCH_CASESENSITIVE MATCH_CASESENSITIVE}</dt>
+     *                      <dd>Beim Vergleich der Dateinamen mit den Filterkriterien soll die Gro&szlig;-/Kleinschreibung
+     *                          ber&uuml;cksichtigt werden.
+     *                          Darf nicht gleichzeitig mit: <q>{@linkplain #MATCH_CASEINSENSITIVE}</q> angegeben werden.
+     *                          Wenn weder: <q>{@linkplain #MATCH_CASESENSITIVE}</q> noch: <q>{@linkplain #MATCH_CASEINSENSITIVE}</q>
+     *                          angegeben werden, h&auml;ngt das Verhalten vom Betriebssystem ab (Windows: ja, andere: nein).
+     *                      </dd>
+     *                      <dt>{@linkplain #MATCH_CASEINSENSITIVE MATCH_CASEINSENSITIVE}</dt>
+     *                      <dd>Beim Vergleich der Dateinamen mit den Filterkriterien soll die Gro&szlig;-/Kleinschreibung
+     *                          nicht ber&uuml;cksichtigt werden.
+     *                          Darf nicht gleichzeitig mit: <q>{@linkplain #MATCH_CASESENSITIVE}</q> angegeben werden.
+     *                          Wenn weder: <q>{@linkplain #MATCH_CASESENSITIVE}</q> noch: <q>{@linkplain #MATCH_CASEINSENSITIVE}</q>
+     *                          angegeben werden, h&auml;ngt das Verhalten vom Betriebssystem ab (Windows: ja, andere: nein).
+     *                      </dd>
+     *                      <dt>{@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_MODIFICATIONDATE FileComparator.SORTEDBY_MODIFICATIONDATE}</dt>
+     *                      <dd>Das zur&uuml;ckgegebene Feld ist nach dem Zeitpunkt der letzten Modifikation sortiert.
+     *                          Die Liste ist aufsteigend, es sei denn es wurde zus&auml;tzlich die Option:
+     *                          {@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
+     *                          angegeben.
+     *                      </dd>
+     *                      <dt>{@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_FILENAME FileComparator.SORTEDBY_FILENAME}</dt>
+     *                      <dd>Das zur&uuml;ckgegebene Feld ist nach den enthaltenen Dateinamen sortiert.
+     *                          Die Liste ist aufsteigend, es sei denn es wurde zus&auml;tzlich die Option:
+     *                          {@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
+     *                          angegeben.
+     *                      </dd>
+     *                      <dt>{@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_PATHNAME FileComparator.SORTEDBY_PATHNAME}</dt>
+     *                      <dd>Das zur&uuml;ckgegebene Feld ist nach den enthaltenen Pfadnamen sortiert.
+     *                          Die Liste ist aufsteigend, es sei denn es wurde zus&auml;tzlich die Option:
+     *                          {@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
+     *                          angegeben.
+     *                      </dd>
+     *                      </dl>
+     * @param  comparator   Die Implementierung einer {@linkplain java.util.Comparator Vergleichsklasse} f&uuml;r
+     *                      {@linkplain java.lang.String Zeichenketten} die zur Sortierung der R&uuml;ckgabewerte verwendet  wird.
+     *                      Sofern dieser Parameter &uuml;bergeben wird, finden die entsprechenden Flags im Parameter: <q>options</q>
+     *                      keine Beachtung.
+     * @return Ein Feld mit einer {@linkplain java.lang.String Zeichenkette} f�r jede gefundenen Datei.
+     *         Der Name ist {@linkplain java.io.File#getCanonicalPath() kanonisch} oder
+     *         {@linkplain java.io.File#getAbsolutePath() absolut}, je nachdem ob die kanonische Namensbildung eine
+     *         {@linkplain java.io.IOException Ausnahme} wirft oder nicht.
+     */
+
+    public static String [] list (String directory, String [] filters, long options, Comparator <String> comparator) {
+        return (list (new String []{directory}, filters, options, comparator));
+    }
 
 
 
@@ -326,7 +403,11 @@ public class DirectoryHelper {
      */
 
     public static String [] list (String directory, String [] filters, long options) {
-        return (list (directory, filters, options, null));
+        return (list (new String [] {directory}, filters, options, null));
+    }
+
+    public static String [] list (String [] directories, String [] filters, long options) {
+        return (list (directories, filters, options, null));
     }
 
 
