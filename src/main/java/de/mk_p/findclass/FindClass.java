@@ -168,15 +168,15 @@ public class FindClass {
                 packageFilters.add ("^.*" + args [i] + ".*\\.[Cc][Ll][Aa][Ss][Ss]$");
             else if (classFilter || (i >= (args.length - 1)))
                 classFilters.add ("^.*" + (isClassFilename(args [i])
-                                           ? args [i] : args [i] + "\\.[Cc][Ll][Aa][Ss][Ss]") + "$");
+                        ? args [i] : args [i] + "\\.[Cc][Ll][Aa][Ss][Ss]") + "$");
             else
                 jarFilters.add (args [i]);
         }
-        classFiles.addAll (classFilters);
         classFilters.addAll (packageFilters);
+        classFiles.addAll (classFilters);
         if (classFilters.size () <= 0)
             System.out.println ("usage: java " + finder.getClass ().getName () +
-                                "[directory] [[-jarfilter ]jar-filter...] [[-classfilter ]classFilter...] classfilter");
+                    "[directory] [[-jarfilter ]jar-filter...] [[-classfilter ]classFilter...] classfilter");
         else {
             if (directory == null)
                 directory = ".";
@@ -204,17 +204,17 @@ public class FindClass {
                         pom = new PomHelper (zipHelper,archives[i]);
                         if (pom != null)
                             System.out.print ("; Group: " +
-                                              ((pom.getGroupId () != null) ? pom.getGroupId () : "[inherited]" ) +
-                                              ", Artifact: " + pom.getArtifactId () +
-                                              ", Version: " + pom.getVersion () + ".");
+                                    ((pom.getGroupId () != null) ? pom.getGroupId () : "[inherited]" ) +
+                                    ", Artifact: " + pom.getArtifactId () +
+                                    ", Version: " + pom.getVersion () + ".");
                         System.out.println ();
                         for (j = 0; j < entries.length; j++)
                             System.out.println ("\t[" + j + "]:\t\"" + entries[j] + "\"");
                     }
                 }
-		catch (FileNotFoundException fnfe) {
-		    System.out.println ("File: \"" + archives [i] + "\" does not exist, ignored");
-		}
+                catch (FileNotFoundException fnfe) {
+                    System.out.println ("File: \"" + archives [i] + "\" does not exist, ignored");
+                }
                 catch (ZipException ze) {
                     // O.K. "archives [i]" calls itself a JAR, but isn't.  Naughty little bugger, but we don't have to care at this point.
                 }
@@ -223,7 +223,7 @@ public class FindClass {
             for (i = 0; i < classes.length; i++) {
                 if (verbose)
                     System.out.println (i + "\t\"" + classes [i] + "\"");
-		System.out.println (classes [i]);
+                System.out.println (classes [i]);
             }
         }
     }

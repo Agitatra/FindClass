@@ -3,7 +3,7 @@ package de.mk_p.findclass;
 /**
  * <p>
  * Ein Interface zur Einflu&szlig;nahme auf die Arbeit der Methoden der Klasse
- * {@linkplain com.vdek.dafin.utils.io.file.DirectoryHelper DirectoryHelper}.
+ * {@linkplain de.mk_p.findclass.DirectoryHelper DirectoryHelper}.
  * </p>
  *
  * @author Mark.Kahl.extern@vdek.com

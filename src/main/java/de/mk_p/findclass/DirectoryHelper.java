@@ -138,22 +138,22 @@ public class DirectoryHelper {
      *                          Wenn weder: <q>{@linkplain #MATCH_CASESENSITIVE}</q> noch: <q>{@linkplain #MATCH_CASEINSENSITIVE}</q>
      *                          angegeben werden, h&auml;ngt das Verhalten vom Betriebssystem ab (Windows: ja, andere: nein).
      *                      </dd>
-     *                      <dt>{@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_MODIFICATIONDATE FileComparator.SORTEDBY_MODIFICATIONDATE}</dt>
+     *                      <dt>{@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_MODIFICATIONDATE FileComparator.SORTEDBY_MODIFICATIONDATE}</dt>
      *                      <dd>Das zur&uuml;ckgegebene Feld ist nach dem Zeitpunkt der letzten Modifikation sortiert.
      *                          Die Liste ist aufsteigend, es sei denn es wurde zus&auml;tzlich die Option:
-     *                          {@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
+     *                          {@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
      *                          angegeben.
      *                      </dd>
-     *                      <dt>{@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_FILENAME FileComparator.SORTEDBY_FILENAME}</dt>
+     *                      <dt>{@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_FILENAME FileComparator.SORTEDBY_FILENAME}</dt>
      *                      <dd>Das zur&uuml;ckgegebene Feld ist nach den enthaltenen Dateinamen sortiert.
      *                          Die Liste ist aufsteigend, es sei denn es wurde zus&auml;tzlich die Option:
-     *                          {@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
+     *                          {@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
      *                          angegeben.
      *                      </dd>
-     *                      <dt>{@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_PATHNAME FileComparator.SORTEDBY_PATHNAME}</dt>
+     *                      <dt>{@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_PATHNAME FileComparator.SORTEDBY_PATHNAME}</dt>
      *                      <dd>Das zur&uuml;ckgegebene Feld ist nach den enthaltenen Pfadnamen sortiert.
      *                          Die Liste ist aufsteigend, es sei denn es wurde zus&auml;tzlich die Option:
-     *                          {@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
+     *                          {@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
      *                          angegeben.
      *                      </dd>
      *                      </dl>
@@ -300,22 +300,22 @@ public class DirectoryHelper {
      *                          Wenn weder: <q>{@linkplain #MATCH_CASESENSITIVE}</q> noch: <q>{@linkplain #MATCH_CASEINSENSITIVE}</q>
      *                          angegeben werden, h&auml;ngt das Verhalten vom Betriebssystem ab (Windows: ja, andere: nein).
      *                      </dd>
-     *                      <dt>{@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_MODIFICATIONDATE FileComparator.SORTEDBY_MODIFICATIONDATE}</dt>
+     *                      <dt>{@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_MODIFICATIONDATE FileComparator.SORTEDBY_MODIFICATIONDATE}</dt>
      *                      <dd>Das zur&uuml;ckgegebene Feld ist nach dem Zeitpunkt der letzten Modifikation sortiert.
      *                          Die Liste ist aufsteigend, es sei denn es wurde zus&auml;tzlich die Option:
-     *                          {@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
+     *                          {@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
      *                          angegeben.
      *                      </dd>
-     *                      <dt>{@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_FILENAME FileComparator.SORTEDBY_FILENAME}</dt>
+     *                      <dt>{@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_FILENAME FileComparator.SORTEDBY_FILENAME}</dt>
      *                      <dd>Das zur&uuml;ckgegebene Feld ist nach den enthaltenen Dateinamen sortiert.
      *                          Die Liste ist aufsteigend, es sei denn es wurde zus&auml;tzlich die Option:
-     *                          {@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
+     *                          {@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
      *                          angegeben.
      *                      </dd>
-     *                      <dt>{@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_PATHNAME FileComparator.SORTEDBY_PATHNAME}</dt>
+     *                      <dt>{@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_PATHNAME FileComparator.SORTEDBY_PATHNAME}</dt>
      *                      <dd>Das zur&uuml;ckgegebene Feld ist nach den enthaltenen Pfadnamen sortiert.
      *                          Die Liste ist aufsteigend, es sei denn es wurde zus&auml;tzlich die Option:
-     *                          {@linkplain com.vdek.dafin.utils.io.file.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
+     *                          {@linkplain de.mk_p.findclass.FileComparator.SORTEDBY_DESCENDING FileComparator.SORTEDBY_DESCENDING}
      *                          angegeben.
      *                      </dd>
      *                      </dl>
@@ -410,7 +410,7 @@ public class DirectoryHelper {
      * @param  filters              Ein Feld mit {@linkplain java.lang.String Zeichenkette} die als
      *                              {@linkplain java.util.regex.Pattern Filter} zur Suche nach Dateinamen verwendet werden sollen.
      * @param  callback             Eine Implementierung der Methode:
-     *                              {@linkplain com.vdek.dafin.utils.io.file.IOHelperCallback#terminate() terminate},
+     *                              {@linkplain de.mk_p.findclass.IOHelperCallback#terminate() terminate},
      *                              die vor der Wartezeit gefragt wird ob weiter gewartet werden soll.
      *                              Falls der Parameter den Wert: <q>null</q> hat wird er ignoriert.
      * @throws InterruptedException Falls der aktuelle {@linkplain java.lang.Thread Thread} von Au&szlig;en unterbrochen wurde.
@@ -419,7 +419,7 @@ public class DirectoryHelper {
      *         {@linkplain java.io.File#getAbsolutePath() absolut}, je nachdem ob die kanonische Namensbildung eine
      *         {@linkplain java.io.IOException Ausnahme} wirft oder nicht.
      *         Sofern die Methode durch die vom Parameter: <q>callback</q> definierte Methode:
-     *         {@linkplain com.vdek.dafin.utils.io.file.IOHelperCallback#terminate() terminate} beendet wurde, ohne da&szlig;
+     *         {@linkplain de.mk_p.findclass.IOHelperCallback#terminate() terminate} beendet wurde, ohne da&szlig;
      *         ein Ergebnis gefunden wurde, gibt sie: <q>null</q> zur&uuml;ck.
      */
 
